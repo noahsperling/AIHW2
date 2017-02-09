@@ -1,0 +1,19 @@
+-A+distance food/anthill
+B-distance enemy drone/soldier
+^workers
+-c = food n stuff
+D- distance to enemies
+some number negative for leaving 0,1, lower than being adjacent to an enemy
+queen^
+drones
+-E+distance to nearest workers
+
+some values?
+.25*(10/approxdist) for drones proxy to enemy workers
+.1 for a drone?
+-.1 for anything other than a drone
+-.1 for the queen sitting on things that are important
+-.1 for the queen leaving the bottom two rows
+-.25*(10/approxdist) for enemy proxy to workers or queen
+.25*(10/approxdist) for worker proxy to food OR worker proxy to anthill, when carrying food
+foodcount/11 'cus getting food's pretty great
