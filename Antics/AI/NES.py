@@ -21,6 +21,12 @@ from AIPlayerUtils import *
 #   playerId - The id of the player.
 ##
 class AIPlayer(Player):
+
+    #list of nodes for search tree
+    node_list = []
+    depth = 3
+
+
     # __init__
     # Description: Creates a new Player
     #
@@ -120,3 +126,12 @@ class AIPlayer(Player):
     def evaluateNode(self):
         y = 0
         return 0
+
+
+    def generate_states(self):
+        return 0
+
+
+    def create_node(self, state, evaluation, move, parent_index):
+        node = [state, evaluation, move, parent_index]
+        self.node_list.append(node)
