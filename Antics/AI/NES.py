@@ -130,7 +130,15 @@ class AIPlayer(Player):
 
     def generate_states(self):
         return 0
-
+		
+	def getCloseDrone(self, node):
+		thisCoords = node[2].coordList[0]
+		enemyList = getAntList(node[0], 1-node[0].whoseTurn, [DRONE, SOLDIER, R_SOLDIER])
+		closestDrone = None;
+		for enemy in enemyList:
+			if approxDist(thisCoords, enemy.coords)<approxDist(thisCoords, closestDrone.coords) or closestDrone==None:
+				closestDrone=enemy
+		return closestDrone
 
     def create_node(self, state, evaluation, move, parent_index):
         node = [state, evaluation, move, parent_index]
