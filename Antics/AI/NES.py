@@ -159,7 +159,7 @@ class AIPlayer(Player):
     def generate_states(self, game_state, curr_depth, index):
         if curr_depth < self.max_depth:
             move_list = listAllLegalMoves(game_state)
-            move_list.remove(END)
+            move_list.pop()
             new_states = []
             for move in move_list:
                 new_states.append(getNextState(game_state, move))
@@ -174,36 +174,15 @@ class AIPlayer(Player):
         elif self.highest_move_eval == 1:
             return
         else:
-            if self.node_list[index]][1] > self.highest_move_eval:
+            if self.node_list[index][1] > self.highest_move_eval:
                 self.highest_evaluated_move = self.node_list[index][2]
                 self.highest_move_eval = self.node_list[index][1]
                 return
 
 
-    def generate_states(self):
-        return 0
-		
 	def getClose(self, node):
-		thisCoords = node[2].coordList[0]
-		if getAntAt(node[0], thisCoords).type == WORKER):
-			enemyList = getAntList(node[0], 1-node[0].whoseTurn, [DRONE, SOLDIER, R_SOLDIER])
-			closestDrone = None;
-			for enemy in enemyList:
-				if approxDist(thisCoords, enemy.coords)<approxDist(thisCoords, closestDrone.coords) or closestDrone==None:
-					closestDrone=enemy
-			return closestDrone
-		else:
-			enemyList = getAntList(node[0], 1-node[0].whoseTurn, [WORKER])
-			closestWorker = None;
-			for enemy in enemyList:
-				if approxDist(thisCoords, enemy.coords)<approxDist(thisCoords, closestDrone.coords) or closestWorker==None:
-					closestWorker=enemy
-			return closestWorker
-		
-		
-	def getClose(self, node):
-		thisCoords = node[2].coordList[0]
-		if (getAntAt(node[0], thisCoords).type == WORKER):
+        thisCoords = node[2].coordList[0]
+		if getAntAt(node[0], thisCoords).type == WORKER:
 			enemyList = getAntList(node[0], 1-node[0].whoseTurn, [DRONE, SOLDIER, R_SOLDIER])
 			closestDrone = None;
 			for enemy in enemyList:
@@ -227,9 +206,6 @@ class AIPlayer(Player):
 			if approxDist(thisCoords, struct.coords)<approxDist(thisCoords, nearStructCoords) or nearStructCoords==None:
 				nearStructCoords=struct.coords
 		return nearStructCoords
-
-
-
 
 
     def create_node(self, state, evaluation, move, depth, parent_index, actual_index):
