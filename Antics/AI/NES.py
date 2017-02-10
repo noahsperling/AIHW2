@@ -24,7 +24,20 @@ class AIPlayer(Player):
 
     #list of nodes for search tree
     node_list = []
-    depth = 3
+
+    #maximum depth
+    max_depth = 1
+
+    #current index - for recursive function
+    cur_array_index = 0
+
+    #highest evaluated move - to be reset every time the generate_states method is called
+    highest_evaluated_move = None
+
+    #highest move score - useful for finding highest evaluated move - to be reset
+    highest_move_eval = -1
+
+
 
 
     # __init__
@@ -188,8 +201,6 @@ class AIPlayer(Player):
 
 
 
-    def generate_states(self):
-        return 0
 
     def create_node(self, state, evaluation, move, parent_index):
         node = [state, evaluation, move, parent_index]
