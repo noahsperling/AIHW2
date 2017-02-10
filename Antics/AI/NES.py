@@ -140,6 +140,15 @@ class AIPlayer(Player):
 				closestDrone=enemy
 		return closestDrone
 		
+	def getCloseWorker(self, node):
+		thisCoords = node[2].coordList[0]
+		enemyList = getAntList(node[0], 1-node[0].whoseTurn, [WORKER])
+		closestWorker = None;
+		for enemy in enemyList:
+			if approxDist(thisCoords, enemy.coords)<approxDist(thisCoords, closestDrone.coords) or closestWorker==None:
+				closestWorker=enemy
+		return closestWorker
+		
 	def guideWorker(self, node):
 		thisCoords = node[2].coordList[0]
 		structList = getConstrList(node[0], node[0].whoseTurn, [ANTHILL, TUNNEL])
