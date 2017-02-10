@@ -139,6 +139,15 @@ class AIPlayer(Player):
 			if approxDist(thisCoords, enemy.coords)<approxDist(thisCoords, closestDrone.coords) or closestDrone==None:
 				closestDrone=enemy
 		return closestDrone
+		
+	def guideWorker(self, node):
+		thisCoords = node[2].coordList[0]
+		structList = getConstrList(node[0], node[0].whoseTurn, [ANTHILL, TUNNEL])
+		nearStructCoords = None;
+		for struct in structList:
+			if approxDist(thisCoords, struct.coords)<approxDist(thisCoords, nearStructCoords) or nearStructCoords==None:
+				nearStructCoords=struct.coords
+		return nearStructCoords
 
     def create_node(self, state, evaluation, move, parent_index):
         node = [state, evaluation, move, parent_index]
