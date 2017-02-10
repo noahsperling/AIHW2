@@ -151,6 +151,10 @@ class AIPlayer(Player):
         y = 0
         return 0
 
+    def create_node(self, state, evaluation, move, depth, parent_index, actual_index):
+        node = [state, evaluation, move, depth, parent_index, actual_index]
+        self.node_list.append(node)
+
     #
     #recursive
     #
@@ -165,7 +169,7 @@ class AIPlayer(Player):
                 new_states.append(getNextState(game_state, move))
             i = 0
             for state in new_states:
-                self.node_list.append(create_node(state, -1, move_list[i], curr_depth + 1, index, self.cur_array_index))
+                self.node_list.append(self.create_node(state, -1, move_list[i], curr_depth + 1, index, self.cur_array_index))
                 self.evaluateNode(self.cur_array_index)
                 self.cur_array_index += 1
                 i += 1
@@ -180,37 +184,37 @@ class AIPlayer(Player):
                 return
 
 
-	def getClose(self, node):
+    def getClose(self, node1):
+        node = []
+        node = node1
         thisCoords = node[2].coordList[0]
-		if getAntAt(node[0], thisCoords).type == WORKER:
-			enemyList = getAntList(node[0], 1-node[0].whoseTurn, [DRONE, SOLDIER, R_SOLDIER])
-			closestDrone = None;
-			for enemy in enemyList:
-				if approxDist(thisCoords, enemy.coords)<approxDist(thisCoords, closestDrone.coords) or closestDrone==None:
-					closestDrone=enemy
-			return closestDrone
-		else:
-			enemyList = getAntList(node[0], 1-node[0].whoseTurn, [WORKER])
-			closestWorker = None;
-			for enemy in enemyList:
-				if approxDist(thisCoords, enemy.coords)<approxDist(thisCoords, closestDrone.coords) or closestWorker==None:
-					closestWorker=enemy
-			return closestWorker
+        if getAntAt(node[0], thisCoords).type == WORKER:
+            enemyList = getAntList(node[0], 1-node[0].whoseTurn, [DRONE, SOLDIER, R_SOLDIER])
+            closestDrone = None;
+            for enemy in enemyList:
+                if approxDist(thisCoords, enemy.coords)<approxDist(thisCoords, closestDrone.coords) or closestDrone==None:
+                    closestDrone=enemy
+            return closestDrone
+        else:
+            enemyList = getAntList(node[0], 1-node[0].whoseTurn, [WORKER])
+            closestWorker = None;
+            for enemy in enemyList:
+                if approxDist(thisCoords, enemy.coords)<approxDist(thisCoords, closestDrone.coords) or closestWorker==None:
+                    closestWorker=enemy
+            return closestWorker
 		
 
-	def guideWorker(self, node):
-		thisCoords = node[2].coordList[0]
-		structList = getConstrList(node[0], node[0].whoseTurn, [ANTHILL, TUNNEL])
-		nearStructCoords = None;
-		for struct in structList:
-			if approxDist(thisCoords, struct.coords)<approxDist(thisCoords, nearStructCoords) or nearStructCoords==None:
-				nearStructCoords=struct.coords
-		return nearStructCoords
+    def guideWorker(self, node):
+        thisCoords = node[2].coordList[0]
+        structList = getConstrList(node[0], node[0].whoseTurn, [ANTHILL, TUNNEL])
+        nearStructCoords = None;
+        for struct in structList:
+            if approxDist(thisCoords, struct.coords)<approxDist(thisCoords, nearStructCoords) or nearStructCoords==None:
+                nearStructCoords=struct.coords
+        return nearStructCoords
 
 
-    def create_node(self, state, evaluation, move, depth, parent_index, actual_index):
-        node = [state, evaluation, move, depth, parent_index, actual_index]
-        self.node_list.append(node)
+
 
 
 
