@@ -49,6 +49,10 @@ class AIPlayer(Player):
     def __init__(self, inputPlayerId):
         super(AIPlayer, self).__init__(inputPlayerId, "Nessie")
 
+    def create_node(self, state, evaluation, move, parent_index, current_depth, index):
+        node = [state, evaluation, move, parent_index]
+        self.node_list.append(node)
+
     ##
     # getPlacement
     #
@@ -113,9 +117,10 @@ class AIPlayer(Player):
     # Return: The Move to be made
     ##
     def getMove(self, currentState):
-        self.cur_array_index = 0
+        self.cur_array_index = 1
         self.highest_evaluated_move = None
         self.highest_move_eval = -1
+        self.create_node(currentState, -1, None, 0, 0, 0)
         self.generate_states(currentState, 0, 0)
         selectedMove = self.highest_evaluated_move
         node_list = []
@@ -147,7 +152,44 @@ class AIPlayer(Player):
         # Attack a random enemy.
         return enemyLocations[random.randint(0, len(enemyLocations) - 1)]
 
-        #
+    def evaluateNode(self, node):
+        eval = 0.5;
+        x = .25;
+        state = self.node_list[node][0]
+        me = state.whoseTurn
+        coords = self.node_list[node][2].coordList[0]
+        theAnt = getAntAt(state, coords)
+        if not theAnt == None:
+            if (theAnt.type == WORKER):
+                if (carrying):  # carrying food
+                    coordsAnthill = guideWorker(node)
+                    dist = approxDist(coords, coordsAnthill)
+                    eval += x * (10 / dist)
+                else:
+                    coordsFood = guideWorker(node)
+                    dist = approxDist(coords, coordsFood)
+                    eval += x * (10 / dist)
+                closeDrone = getClose(node)
+                dist = approxDist(coords, closeDrone.coords)
+                eval += .25 * (10 / dist)
+                return eval
+            if (theAnt.type == QUEEN):
+                for con in getConstrList(state, me, (ANTHILL, TUNNEL, FOOD)):
+                    if (theAnt.coords == con.coords):
+                        eval -= .1
+                if (theAnt.coords.x > 1):
+                    eval -= .1
+                closeDrone = getClose(node)
+                dist = approxDist(theAnt.coords, closeDrone.coords)
+                eval += .25 * (10 / dist)
+                return eval
+            if (theAnt.type == DRONE):
+                closeWorker = getClose(node)
+                dist = approxDist(coords, closeWorker.coords)
+                eval += .25 * (10 / dist)
+                return eval
+
+
     #recursive
     #
     #
@@ -166,7 +208,7 @@ class AIPlayer(Player):
                 self.cur_array_index += 1
                 i += 1
             for j in range(self.cur_array_index - i, self.cur_array_index + 1):
-                generate_states(self.node_list[j], curr_depth + 1, self.node_list[j][5])
+                self.generate_states(self.node_list[j], curr_depth + 1, self.node_list[j][5])
         elif self.highest_move_eval == 1:
             return
         else:
@@ -203,43 +245,21 @@ class AIPlayer(Player):
                 nearStructCoords=struct.coords
         return nearStructCoords
 
-    def evaluateNode(self, node):
-        eval = 0.5;
-        x =.25;
-        state = node_list[node][0]
-        me = state.whoseTurn
-        coords =self.node_list[node][2].coordList[0]
-        theAnt = getAntAt(coords)
-        if(theAnt.type == WORKER):
-            if(carrying): #carrying food
-                coordsAnthill = guideWorker(node)
-                dist = approxDist(coords, coordsAnthill)
-                eval += x*(10/dist)
-            else:
-                coordsFood = guideWorker(node)
-                dist = approxDist(coords, coordsFood)
-                eval += x*(10/dist)
-            closeDrone = getClose(node)
-            dist = approxDist(coords,closeDrone.coords)
-            eval += .25*(10/dist)
-            return eval
-        if(theAnt.type == QUEEN):
-            for con in getConstrList(state, me, (ANTHILL, TUNNEL, FOOD))
-                if(theAnt.coords == con.coords):
-                    eval -= .1
-            if(theAnt.coords.x > 1):
-                eval -= .1
-            closeDrone = getClose(node)
-            dist = approxDist(theAnt.coords, closeDrone.coords)
-            eval += .25*(10/dist)
-            return eval
-        if(theAnt.type == DRONE):
-            closeWorker = getClose(node)
-            dist = approxDist(coords, closeWorker.coords)
-            eval += .25*(10/dist)
-            return eval
 
-    def create_node(self, state, evaluation, move, parent_index):
-        node = [state, evaluation, move, parent_index]
-        self.node_list.append(node)
 
+
+
+
+
+
+#Stuff to do:
+#   write helper method to evaluate whether or not the main evaluation method is necessary
+#   test evaluation method with recursive method
+#
+#
+#
+#
+#
+#
+#
+#
