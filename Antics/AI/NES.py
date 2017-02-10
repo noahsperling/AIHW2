@@ -131,23 +131,23 @@ class AIPlayer(Player):
     def generate_states(self):
         return 0
 		
-	def getCloseDrone(self, node):
+	def getClose(self, node):
 		thisCoords = node[2].coordList[0]
-		enemyList = getAntList(node[0], 1-node[0].whoseTurn, [DRONE, SOLDIER, R_SOLDIER])
-		closestDrone = None;
-		for enemy in enemyList:
-			if approxDist(thisCoords, enemy.coords)<approxDist(thisCoords, closestDrone.coords) or closestDrone==None:
-				closestDrone=enemy
-		return closestDrone
+		if getAntAt(node[0], thisCoords).type == WORKER):
+			enemyList = getAntList(node[0], 1-node[0].whoseTurn, [DRONE, SOLDIER, R_SOLDIER])
+			closestDrone = None;
+			for enemy in enemyList:
+				if approxDist(thisCoords, enemy.coords)<approxDist(thisCoords, closestDrone.coords) or closestDrone==None:
+					closestDrone=enemy
+			return closestDrone
+		else:
+			enemyList = getAntList(node[0], 1-node[0].whoseTurn, [WORKER])
+			closestWorker = None;
+			for enemy in enemyList:
+				if approxDist(thisCoords, enemy.coords)<approxDist(thisCoords, closestDrone.coords) or closestWorker==None:
+					closestWorker=enemy
+			return closestWorker
 		
-	def getCloseWorker(self, node):
-		thisCoords = node[2].coordList[0]
-		enemyList = getAntList(node[0], 1-node[0].whoseTurn, [WORKER])
-		closestWorker = None;
-		for enemy in enemyList:
-			if approxDist(thisCoords, enemy.coords)<approxDist(thisCoords, closestDrone.coords) or closestWorker==None:
-				closestWorker=enemy
-		return closestWorker
 		
 	def guideWorker(self, node):
 		thisCoords = node[2].coordList[0]
