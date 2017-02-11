@@ -49,8 +49,8 @@ class AIPlayer(Player):
     def __init__(self, inputPlayerId):
         super(AIPlayer, self).__init__(inputPlayerId, "Nessie")
 
-    def create_node(self, state, evaluation, move, parent_index, current_depth, index):
-        node = [state, evaluation, move, parent_index]
+    def create_node(self, state, evaluation, move, current_depth, parent_index, index):
+        node = [state, evaluation, move, current_depth, parent_index, index]
         self.node_list.append(node)
 
     ##
@@ -204,7 +204,8 @@ class AIPlayer(Player):
             i = 0
             for state in new_states:
                 self.node_list.append(self.create_node(state, -1, move_list[i], curr_depth + 1, index, self.cur_array_index))
-                self.evaluateNode(self.cur_array_index)
+                node_eval = self.evaluateNode(self.cur_array_index)
+                self.node_list[i][1] = node_eval
                 self.cur_array_index += 1
                 i += 1
             for j in range(self.cur_array_index - i, self.cur_array_index + 1):
