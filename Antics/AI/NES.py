@@ -218,6 +218,44 @@ class AIPlayer(Player):
                 self.highest_move_eval = self.node_list[index][1]
                 return
 
+    def move_search(self, game_state, curr_depth, curr_node_index):
+
+        #list all legal moves
+        move_list = listAllLegalMoves(game_state)
+
+        #remove end turn move
+        move_list.pop()
+
+        #list of new states, empty currently
+        new_states = []
+
+        # list of nodes, which contain the state, move, and eval
+        node_list = []
+
+        #generate states based on moves, evaluate them and put them into a list in node_list
+        for move in move_list:
+            state = getNextState(game_state, move)
+            node_list.append([state, move, self.evaluate_state(state), curr_node_index])
+
+        # iterator, to store parent node index
+        i = 0
+
+        #if not at the max depth, expand all the nodes in node_list
+        if not curr_depth >= self.max_depth:
+            for node in node_list:
+                self.move_search(node[0], curr_depth + 1, i)
+                i += 1
+
+
+
+
+    def evaluate_state(self):
+        return 0.5
+
+
+
+
+
     def getClose(self, node1):
         node = []
         node = node1
