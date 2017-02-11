@@ -117,17 +117,14 @@ class AIPlayer(Player):
     # Return: The Move to be made
     ##
     def getMove(self, currentState):
-        self.cur_array_index = 1
-        self.highest_evaluated_move = None
-        self.highest_move_eval = -1
-        self.create_node(currentState, -1, None, 0, 0, 0)
-        self.generate_states(currentState, 0, 0)
-        selectedMove = self.highest_evaluated_move
-        node_list = []
+        selectedMove = self.move_search(currentState, 0, 0)
 
-
-
-
+        if not selectedMove == None:
+            return selectedMove
+        else:
+            print("Move returned by move_search was null.")
+            moves = listAllLegalMoves(currentState)
+            return moves[0]
 
         #moves = listAllLegalMoves(currentState)
         #selectedMove = moves[random.randint(0, len(moves) - 1)];
@@ -137,7 +134,8 @@ class AIPlayer(Player):
         #while (selectedMove.moveType == BUILD and numAnts >= 3):
             #selectedMove = moves[random.randint(0, len(moves) - 1)];
 
-        return selectedMove
+        #return selectedMove
+
 
     ##
     # getAttack
@@ -218,7 +216,18 @@ class AIPlayer(Player):
                 self.highest_move_eval = self.node_list[index][1]
                 return
 
-    def move_search(self, game_state, curr_depth, curr_node_index):
+
+    #RECURSIVE WARNING!!!!
+    #
+    # Parameters:
+    #   game_state - current state
+    #   curr_depth - current search depth
+    #
+    # Return
+    #   returns a move object
+    #
+    #
+    def move_search(self, game_state, curr_depth):
 
         #list all legal moves
         move_list = listAllLegalMoves(game_state)
@@ -240,17 +249,166 @@ class AIPlayer(Player):
         # iterator, to store parent node index
         i = 0
 
-        #if not at the max depth, expand all the nodes in node_list
-        if not curr_depth >= self.max_depth:
+        best_val = -1
+
+        #if not at the max depth, expand all the nodes in node_list and return the best parent
+        if curr_depth <= self.max_depth:
             for node in node_list:
-                self.move_search(node[0], curr_depth + 1, i)
+                best_val = self.move_search(node[0], curr_depth + 1, i)
+                if best_val > node[2]:
+                    node[2] = best_val
                 i += 1
 
+        if not curr_depth == 1:
+            return best_val
+        else:
+            for node in node_list:
+                if node[2] == best_val:
+                    return node[1]
 
 
 
-    def evaluate_state(self):
-        return 0.5
+
+
+    #Evaluates and scores a GameState Object
+    #
+    # Parameters
+    #   state - the GameState object to evaluate
+    #
+    # Return
+    #   a number between 0 and 1 inclusive
+    #
+    def evaluate_state(self, state):
+        #return 0.5
+
+        #the starting value, not winning or losing
+        eval = 500
+
+        #the AIs player ID
+        me = state.whoseTurn
+
+        #the inventories of this AI and the enemy
+        my_inv = None
+        enemy_inv = None
+
+        #sets up the inventories
+        if state.inventories[0].player == me:
+            my_inv = state.inventories[0]
+            enemy_inv = state.inventories[1]
+        else:
+            my_inv = state.inventories[1]
+            enemy_inv = state.inventories[2]
+
+        food_coords = []
+
+        for c in my_inv.constrs:
+            if c.type == FOOD:
+                food_coords.append(c.coords)
+
+        #coordinates of this AI's tunnel
+        t_coords = my_inv.getTunnel.coods
+
+        #coordinates of this AI's anthill
+        ah_coords = my_inv.getAntHill.coords
+
+
+
+        #iterates through ants and scores positioning
+        for ant in my_inv.ants:
+
+            #scores queen
+            if ant.type == QUEEN:
+
+                #if queen is on anthill, tunnel, or food it's bad
+                if ant.coords == ah_coords or ant.coords == t_coords or ant.coords == food_coords[0] or ant.coords == food_coords[1]:
+                    eval -= 200
+
+                #if queen is out of rows 0 or 1 it's bad
+                if ant.coords[0] > 1:
+                    eval -= 100
+
+                # the father from enemy ants, the better
+                eval += -100 + (15 * self.get_closest_enemy_dist(ant.coords, enemy_inv.ants))
+
+            #scores worker to incentivize food gathering
+            elif ant.type == WORKER:
+
+                #if carrying, the closer to the anthill or tunnel, the better
+                if ant.carrying == True:
+
+                    #distance to anthill
+                    ah_dist = approxDist(ant.coords, ah_coords)
+
+                    #distance to tunnel
+                    t_dist = approxDist(ant.coords, t_coords)
+
+                    #finds closest and scores
+                    if t_dist < ah_dist:
+                        eval += 50 - (5 * t_dist)
+                    else:
+                        eval += 50 - (5 * ah_dist)
+
+                #if not carrying, the closer to food, the better
+                else:
+
+                    #distance to foods
+                    f1_dist = approxDist(ant.coords, food_coords[0])
+                    f2_dist = approxDist(ant.coords, food_coords[1])
+
+                    #finds closest and scores
+                    if f1_dist < f2_dist:
+                        eval += 50 - f1_dist
+                    else:
+                        eval += 50 - f2_dist
+
+                #the father from enemy ants, the better
+                eval += -5 + self.get_closest_enemy_dist(ant.coords, enemy_inv.ants)
+
+            #scores soldiers to incentivize the disruption of the enemy economy
+            else:
+
+                nearest_enemy_worker_dist = self.get_closest_enemy_worker_dist(ant.coords, enemy_inv.ants)
+
+                #if there is an enemy worker
+                if not nearest_enemy_worker_dist == 100:
+                    eval += 50 - (5 * nearest_enemy_worker_dist)
+
+                #if there isn't an enemy worker, go to the food
+                else:
+                    eval += 50 -
+
+
+
+
+
+
+
+
+
+
+
+    #helper function for evaluate_state - self explanatory
+    def get_closest_enemy_dist(self, my_ant_coords, enemy_ants):
+        closest_dist = 100
+        for ant in enemy_ants:
+            if not enemy_ants.type == WORKER:
+                dist = approxDist(my_ant_coords, ant.coords)
+                if dist < closest_dist:
+                    closest_dist = dist
+        return closest_dist
+
+
+    #helper function for evaluate state - self explanatory
+    def get_closest_enemy_worker_dist(self, my_ant_coords, enemy_ants):
+        closest_dist = 100
+        for ant in enemy_ants:
+            if enemy_ants.type == WORKER:
+                dist = approxDist(my_ant_coords, ant.coords)
+                if dist < closest_dist:
+                    closest_dist = dist
+        return closest_dist
+
+
 
 
 
