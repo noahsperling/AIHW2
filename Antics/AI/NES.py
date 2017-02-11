@@ -117,7 +117,7 @@ class AIPlayer(Player):
     # Return: The Move to be made
     ##
     def getMove(self, currentState):
-        selectedMove = self.move_search(currentState, 0, 0)
+        selectedMove = self.move_search(currentState, 0)
 
         if not selectedMove == None:
             return selectedMove
@@ -267,7 +267,44 @@ class AIPlayer(Player):
                     return node[1]
 
 
+    # helper function for evaluate_state - self explanatory
+    def get_closest_enemy_dist(self, my_ant_coords, enemy_ants):
+        closest_dist = 100
+        for ant in enemy_ants:
+            if not enemy_ants.type == WORKER:
+                dist = approxDist(my_ant_coords, ant.coords)
+                if dist < closest_dist:
+                    closest_dist = dist
+        return closest_dist
 
+
+    # helper function for evaluate state - self explanatory
+    def get_closest_enemy_worker_dist(self, my_ant_coords, enemy_ants):
+        closest_dist = 100
+        for ant in enemy_ants:
+            if enemy_ants.type == WORKER:
+                dist = approxDist(my_ant_coords, ant.coords)
+                if dist < closest_dist:
+                    closest_dist = dist
+        return closest_dist
+
+
+    # helper function for evaluate state - self explanatory
+    def get_closest_enemy_food_dist(self, my_ant_coords, enemy_inv):
+
+        enemy_food_coords = []
+
+        for c in enemy_inv.constrs:
+            if c.type == FOOD:
+                enemy_food_coords.append(c.coords)
+
+        enemy_food1_dist = approxDist(my_ant_coords, enemy_food_coords[0])
+        enemy_food2_dist = approxDist(my_ant_coords, enemy_food_coords[1])
+
+        if enemy_food1_dist < enemy_food2_dist:
+            return enemy_food1_dist
+        else:
+            return enemy_food2_dist
 
 
     #Evaluates and scores a GameState Object
@@ -291,6 +328,10 @@ class AIPlayer(Player):
         my_inv = None
         enemy_inv = None
 
+        #important number
+        worker_count = 0
+        drone_count = 0
+
         #sets up the inventories
         if state.inventories[0].player == me:
             my_inv = state.inventories[0]
@@ -299,6 +340,7 @@ class AIPlayer(Player):
             my_inv = state.inventories[1]
             enemy_inv = state.inventories[2]
 
+        #this doesn't work, will fix
         food_coords = []
 
         for c in my_inv.constrs:
@@ -306,10 +348,11 @@ class AIPlayer(Player):
                 food_coords.append(c.coords)
 
         #coordinates of this AI's tunnel
-        t_coords = my_inv.getTunnel.coods
+        tunnel = my_inv.getTunnels()
+        t_coords = tunnel[0].coords
 
         #coordinates of this AI's anthill
-        ah_coords = my_inv.getAntHill.coords
+        ah_coords = my_inv.getAnthill().coords
 
 
 
@@ -332,6 +375,9 @@ class AIPlayer(Player):
 
             #scores worker to incentivize food gathering
             elif ant.type == WORKER:
+
+                #tallies up workers
+                worker_count += 1
 
                 #if carrying, the closer to the anthill or tunnel, the better
                 if ant.carrying == True:
@@ -367,6 +413,9 @@ class AIPlayer(Player):
             #scores soldiers to incentivize the disruption of the enemy economy
             else:
 
+                #tallies up soldiers
+                drone_count += 1
+
                 nearest_enemy_worker_dist = self.get_closest_enemy_worker_dist(ant.coords, enemy_inv.ants)
 
                 #if there is an enemy worker
@@ -375,7 +424,24 @@ class AIPlayer(Player):
 
                 #if there isn't an enemy worker, go to the food
                 else:
-                    eval += 50 -
+                    eval += 50 - self.get_closest_enemy_food_dist(ant.coords, enemy_inv)
+
+        #scores other important things
+
+        if worker_count < 3:
+            eval -= 50
+
+        if soldier_count < 3:
+            eval -= 50
+
+        eval += 20 * my_inv.foodcount
+
+        if my_inv.foodcount == 11 or enemy_inv.foodcount == 0:
+            return 1
+        else:
+            return_eval = eval/1000
+            print(return_eval)
+            return return_eval
 
 
 
@@ -387,26 +453,6 @@ class AIPlayer(Player):
 
 
 
-    #helper function for evaluate_state - self explanatory
-    def get_closest_enemy_dist(self, my_ant_coords, enemy_ants):
-        closest_dist = 100
-        for ant in enemy_ants:
-            if not enemy_ants.type == WORKER:
-                dist = approxDist(my_ant_coords, ant.coords)
-                if dist < closest_dist:
-                    closest_dist = dist
-        return closest_dist
-
-
-    #helper function for evaluate state - self explanatory
-    def get_closest_enemy_worker_dist(self, my_ant_coords, enemy_ants):
-        closest_dist = 100
-        for ant in enemy_ants:
-            if enemy_ants.type == WORKER:
-                dist = approxDist(my_ant_coords, ant.coords)
-                if dist < closest_dist:
-                    closest_dist = dist
-        return closest_dist
 
 
 
