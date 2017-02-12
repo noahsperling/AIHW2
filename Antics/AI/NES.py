@@ -26,7 +26,7 @@ class AIPlayer(Player):
     node_list = []
 
     #maximum depth
-    max_depth = 1
+    max_depth = 2
 
     #current index - for recursive function
     cur_array_index = 0
@@ -117,7 +117,7 @@ class AIPlayer(Player):
     # Return: The Move to be made
     ##
     def getMove(self, currentState):
-        selectedMove = self.move_search(currentState, 0)
+        selectedMove = self.move_search(currentState, 0, 0)
 
         if not selectedMove == None:
             return selectedMove
@@ -227,7 +227,10 @@ class AIPlayer(Player):
     #   returns a move object
     #
     #
-    def move_search(self, game_state, curr_depth):
+    def move_search(self, game_state, curr_depth, curr_node_index):
+
+        if curr_depth == self.max_depth:
+            return self.evaluate_state(game_state)
 
         #list all legal moves
         move_list = listAllLegalMoves(game_state)
@@ -244,7 +247,9 @@ class AIPlayer(Player):
         #generate states based on moves, evaluate them and put them into a list in node_list
         for move in move_list:
             state = getNextState(game_state, move)
-            node_list.append([state, move, self.evaluate_state(state), curr_node_index])
+            state_eval = self.evaluate_state(state)
+            print(state_eval)
+            node_list.append([state, move, state_eval, curr_node_index])
 
         # iterator, to store parent node index
         i = 0
@@ -259,12 +264,19 @@ class AIPlayer(Player):
                     node[2] = best_val
                 i += 1
 
-        if not curr_depth == 1:
+        if not curr_depth == 0:
             return best_val
         else:
+            best_eval = -1
+            best_eval_index = 0
+            j = 0
             for node in node_list:
-                if node[2] == best_val:
-                    return node[1]
+                if node[2] > best_eval:
+                    best_val = node[2]
+                    best_eval_index = j
+
+                j+=1
+            return node_list[best_eval_index][1]
 
 
     # helper function for evaluate_state - self explanatory
@@ -319,7 +331,7 @@ class AIPlayer(Player):
         #return 0.5
 
         #the starting value, not winning or losing
-        eval = 500
+        eval = 500.0
 
         #the AIs player ID
         me = state.whoseTurn
@@ -343,9 +355,12 @@ class AIPlayer(Player):
         #this doesn't work, will fix
         food_coords = []
 
-        for c in my_inv.constrs:
-            if c.type == FOOD:
-                food_coords.append(c.coords)
+        foods = getConstrList(state, None, (FOOD,))
+
+        for f in foods:
+            if f.coords[1] < 5:
+                food_coords.append(f.coords)
+
 
         #coordinates of this AI's tunnel
         tunnel = my_inv.getTunnels()
@@ -431,17 +446,17 @@ class AIPlayer(Player):
         if worker_count < 3:
             eval -= 50
 
-        if soldier_count < 3:
+        if drone_count < 3:
             eval -= 50
 
-        eval += 20 * my_inv.foodcount
+        eval += 20 * my_inv.foodCount
 
-        if my_inv.foodcount == 11 or enemy_inv.foodcount == 0:
-            return 1
-        else:
-            return_eval = eval/1000
-            print(return_eval)
-            return return_eval
+        #if my_inv.foodCount == 11 or enemy_inv.foodCount == 0:
+            #return 1
+        #else:
+        return_eval = eval/1000
+        print(return_eval)
+        return return_eval
 
 
 
