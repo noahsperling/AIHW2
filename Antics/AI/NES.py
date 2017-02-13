@@ -188,7 +188,7 @@ class AIPlayer(Player):
             #print(state_eval)
             node_list.append([state, move, state_eval, curr_node_index])
 
-        # iterator, to store parent node index
+        #iterator, to store parent node index
         i = 0
 
         best_val = -1
@@ -205,19 +205,18 @@ class AIPlayer(Player):
             return best_val
         else:
             best_eval = -1
-            #best_eval_index = 0
             best_node = []
-            j = 0
+
             for node in node_list:
                 if node[2] > best_eval:
                     best_eval = node[2]
-                    #best_eval_index = j
                     best_node = node
 
-                j+=1
             print(len(best_node))
             if not best_node == []:
                 return best_node[1]
+            else:
+                return None
 
 
     # helper function for evaluate_state - self explanatory
@@ -243,13 +242,7 @@ class AIPlayer(Player):
 
 
     # helper function for evaluate state - self explanatory
-    def get_closest_enemy_food_dist(self, my_ant_coords, enemy_inv):
-
-        enemy_food_coords = []
-
-        for c in enemy_inv.constrs:
-            if c.type == FOOD:
-                enemy_food_coords.append(c.coords)
+    def get_closest_enemy_food_dist(self, my_ant_coords, enemy_food_coords):
 
         enemy_food1_dist = approxDist(my_ant_coords, enemy_food_coords[0])
         enemy_food2_dist = approxDist(my_ant_coords, enemy_food_coords[1])
@@ -293,14 +286,26 @@ class AIPlayer(Player):
             my_inv = state.inventories[1]
             enemy_inv = state.inventories[2]
 
-        #this doesn't work, will fix
         food_coords = []
+        enemy_food_coords = []
 
         foods = getConstrList(state, None, (FOOD,))
 
-        #for f in foods:
-            #if f.coords[0] < 5:
-                #food_coords.append(f.coords)
+        for food in foods:
+            if food.coords[1] < 5:
+                food_coords.append(food.coords)
+            else:
+                enemy_food_coords.append(food.coords)
+
+        print(food_coords)
+
+        #if me == 0:
+            #food_coords.append(foods[0].coords)
+            #food_coords.append(foods[1].coords)
+        #else:
+            #food_coords.append(foods[2].coords)
+            #food_coords.append(foods[3].coords)
+
 
 
         #coordinates of this AI's tunnel
@@ -346,7 +351,8 @@ class AIPlayer(Player):
 
                     #finds closest and scores
                     if ant.coords == ah_coords or ant.coords == t_coords:
-                        eval += 500
+                        print("PHill")
+                        eval += 100000000
                     elif t_dist < ah_dist:
                         eval += 50 - (5 * t_dist)
                     else:
@@ -361,6 +367,7 @@ class AIPlayer(Player):
 
                     #finds closest and scores
                     if ant.coords == food_coords[0] or ant.coords == food_coords[1]:
+                        print("PFood")
                         eval += 500
                     elif f1_dist < f2_dist:
                         eval += 50 - (5 * f1_dist)
@@ -395,10 +402,10 @@ class AIPlayer(Player):
             eval -= 50
 
         if worker_count > 2:
-            eval -= 100
+            eval -= 100000000000
 
         if drone_count > 3:
-            eval -= 50
+            eval -= 1000000000000
 
 
         eval += 20 * my_inv.foodCount
