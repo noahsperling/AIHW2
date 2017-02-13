@@ -26,7 +26,7 @@ class AIPlayer(Player):
     node_list = []
 
     #maximum depth
-    max_depth = 4
+    max_depth = 2
 
     #current index - for recursive function
     cur_array_index = 0
