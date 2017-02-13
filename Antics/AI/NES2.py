@@ -26,7 +26,7 @@ class AIPlayer(Player):
     node_list = []
 
     #maximum depth
-    max_depth = 4
+    max_depth = 1
 
     #current index - for recursive function
     cur_array_index = 0
@@ -47,7 +47,7 @@ class AIPlayer(Player):
     #   inputPlayerId - The id to give the new player (int)
     ##
     def __init__(self, inputPlayerId):
-        super(AIPlayer, self).__init__(inputPlayerId, "Nessie")
+        super(AIPlayer, self).__init__(inputPlayerId, "NessieVS")
 
     def create_node(self, state, evaluation, move, current_depth, parent_index, index):
         node = [state, evaluation, move, current_depth, parent_index, index]
@@ -120,13 +120,13 @@ class AIPlayer(Player):
         selectedMove = self.move_search(currentState, 0)
 
         if not selectedMove == None:
-            #print("Move returned.")
+            print("Move returned.")
             return selectedMove
         else:
             #print("Move returned by move_search was null.")
             #moves = listAllLegalMoves(currentState)
             #return moves[0]
-            #print("Ended turn.")
+            print("Ended turn.")
             return Move(END, None, None)
 
         #moves = listAllLegalMoves(currentState)
@@ -185,24 +185,11 @@ class AIPlayer(Player):
             #print(state_eval)
             node_list.append([state, move, state_eval])
 
-
-        self.mergeSort(node_list)
-
-        #for node in node_list:
-            #print(node[2])
-
-        best_ten = []
-
-        for i in range (0,2):
-            if not len(node_list) == 0:
-                best_ten.append(node_list.pop())
-
-
         best_val = -1
 
         #if not at the max depth, expand all the nodes in node_list and return
         if curr_depth <= self.max_depth:
-            for node in best_ten:
+            for node in node_list:
                 best_val = self.move_search(node[0], curr_depth + 1)
                 if best_val > node[2]:
                     node[2] = best_val
@@ -213,7 +200,7 @@ class AIPlayer(Player):
             best_eval = -1
             best_node = []
 
-            for node in best_ten:
+            for node in node_list:
                 if node[2] > best_eval:
                     best_eval = node[2]
                     best_node = node
@@ -424,40 +411,6 @@ class AIPlayer(Player):
         return_eval = eval/1000
         #print(return_eval)
         return return_eval
-
-    def mergeSort(self, alist):
-        if len(alist) > 1:
-            mid = len(alist) // 2
-            lefthalf = alist[:mid]
-            righthalf = alist[mid:]
-
-            self.mergeSort(lefthalf)
-            self.mergeSort(righthalf)
-
-            i = 0
-            j = 0
-            k = 0
-            while i < len(lefthalf) and j < len(righthalf):
-                if lefthalf[i][2] < righthalf[j][2]:
-                    alist[k] = lefthalf[i]
-                    i = i + 1
-                else:
-                    alist[k] = righthalf[j]
-                    j = j + 1
-                k = k + 1
-
-            while i < len(lefthalf):
-                alist[k] = lefthalf[i]
-                i = i + 1
-                k = k + 1
-
-            while j < len(righthalf):
-                alist[k] = righthalf[j]
-                j = j + 1
-                k = k + 1
-
-
-
 
 
 
