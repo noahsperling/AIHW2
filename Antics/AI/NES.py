@@ -150,7 +150,7 @@ class AIPlayer(Player):
     #   enemyLocation - The Locations of the Enemies that can be attacked (Location[])
     ##
     def getAttack(self, currentState, attackingAnt, enemyLocations):
-        # Attack a random enemy.
+        #Don't care
         return enemyLocations[0]
 
 
@@ -444,3 +444,4 @@ class AIPlayer(Player):
                 k = k + 1
 
 
+#sample_state =

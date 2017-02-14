@@ -180,10 +180,12 @@ class AIPlayer(Player):
 
         #generate states based on moves, evaluate them and put them into a list in node_list
         for move in move_list:
+            state_eval = 0
             state = getNextState(game_state, move)
             state_eval = self.evaluate_state(state)
             #print(state_eval)
-            node_list.append([state, move, state_eval])
+            if not state_eval == 0.00001:
+                node_list.append([state, move, state_eval])
 
 
         self.mergeSort(node_list)
@@ -316,6 +318,9 @@ class AIPlayer(Player):
         #A list that stores the evaluations of each drone, if they exist
         dEval = []
 
+        #queen evaluation
+        qEval = 0
+
         #iterates through ants and scores positioning
         for ant in my_inv.ants:
 
@@ -344,7 +349,7 @@ class AIPlayer(Player):
                 #if carrying, the closer to the anthill or tunnel, the better
                 if ant.carrying:
 
-                    wEval.append(50.0)
+                    wEval.append(100.0)
 
                     #distance to anthill
                     ah_dist = approxDist(ant.coords, ah_coords)
@@ -364,7 +369,7 @@ class AIPlayer(Player):
                 #if not carrying, the closer to food, the better
                 else:
 
-                    wEval.append(40.0)
+                    wEval.append(80.0)
 
                     #distance to foods
                     f1_dist = approxDist(ant.coords, food_coords[0])
@@ -410,18 +415,19 @@ class AIPlayer(Player):
         elif worker_count < 2:
             sEval -= 10
         elif worker_count > 2:
-            print("Built a third worker damnit.")
-            return 0.0000001
+            eval_num = 0.00001
+            #print("Built a 3rd worker, returned 0.00001")
+            return eval_num
 
         if drone_count == 2:
             sEval += 50
         elif drone_count < 2:
             sEval -= 10
         elif drone_count > 2:
-            sEval -= 100
+            sEval = 0
 
-
-        sEval += 20 * my_inv.foodCount
+        if not sEval == 0:
+            sEval += 20 * my_inv.foodCount
 
         if my_inv.foodCount == 11:
             return 1
@@ -432,7 +438,10 @@ class AIPlayer(Player):
 
         for val in wEval:
             temp += val
-        wEvalAv = 2 * temp/worker_count
+        if worker_count == 0:
+            wEvalAv = 0
+        else:
+            wEvalAv = temp/worker_count
 
         temp = 0
 
@@ -447,8 +456,10 @@ class AIPlayer(Player):
         total_possible = 100.0 + 50.0 + 50.0 + 300.0
 
         eval = (qEval + wEvalAv + dEvalAv + sEval)/ total_possible
+        if eval <= 0:
+            eval = 0.00002
 
-        print(eval)
+        #print(eval)
         return eval
 
 
