@@ -13,12 +13,16 @@ from AIPlayerUtils import *
 
 ##
 # AIPlayer
-# Description: The responsibility of this class is to interact with the game by
-# deciding a valid move based on a given game state. This class has methods that
-# will be implemented by students in Dr. Nuxoll's AI course.
+# Description: This class uses A* search with pruning to search for the best next move based
+# on the evaluate_state heuristic function.
+#
 #
 # Variables:
 #   playerId - The id of the player.
+#
+# @authors Noah Sperling, Eric Imperio, Sean Tollisen
+#
+# @version 02/13/2017 version 3.14159265358979323846264338327950288419716939937510
 ##
 class AIPlayer(Player):
 
@@ -38,8 +42,6 @@ class AIPlayer(Player):
     highest_move_eval = -1
 
 
-
-
     # __init__
     # Description: Creates a new Player
     #
@@ -52,6 +54,7 @@ class AIPlayer(Player):
     def create_node(self, state, evaluation, move, current_depth, parent_index, index):
         node = [state, evaluation, move, current_depth, parent_index, index]
         self.node_list.append(node)
+
 
     ##
     # getPlacement
@@ -107,6 +110,7 @@ class AIPlayer(Player):
         else:
             return [(0, 0)]
 
+
     ##
     # getMove
     # Description: Gets the next move from the Player.
@@ -117,27 +121,14 @@ class AIPlayer(Player):
     # Return: The Move to be made
     ##
     def getMove(self, currentState):
+        #searches for best move
         selectedMove = self.move_search(currentState, 0)
 
+        #if not None, return move, if None, end turn
         if not selectedMove == None:
-            #print("Move returned.")
             return selectedMove
         else:
-            #print("Move returned by move_search was null.")
-            #moves = listAllLegalMoves(currentState)
-            #return moves[0]
-            #print("Ended turn.")
             return Move(END, None, None)
-
-        #moves = listAllLegalMoves(currentState)
-        #selectedMove = moves[random.randint(0, len(moves) - 1)];
-
-        # don't do a build move if there are already 3+ ants
-        #numAnts = len(currentState.inventories[currentState.whoseTurn].ants)
-        #while (selectedMove.moveType == BUILD and numAnts >= 3):
-            #selectedMove = moves[random.randint(0, len(moves) - 1)];
-
-        #return selectedMove
 
 
     ##
@@ -154,7 +145,10 @@ class AIPlayer(Player):
         return enemyLocations[0]
 
 
-    #RECURSIVE WARNING!!!!
+    ##
+    # move_search - recursive
+    #
+    # uses A* search with pruning to search for best next move
     #
     # Parameters:
     #   game_state - current state
@@ -162,10 +156,10 @@ class AIPlayer(Player):
     #
     # Return
     #   returns a move object
-    #
-    #
+    ##
     def move_search(self, game_state, curr_depth):
 
+        #if max depth surpassed, return state evaluation
         if curr_depth == self.max_depth + 1:
             return self.evaluate_state(game_state)
 
@@ -227,7 +221,11 @@ class AIPlayer(Player):
                 return None
 
 
-    # helper function for evaluate_state - self explanatory
+    ##
+    # get_closest_enemy_dist - helper function
+    #
+    # returns distance to closest enemy from an ant
+    ##
     def get_closest_enemy_dist(self, my_ant_coords, enemy_ants):
         closest_dist = 100
         for ant in enemy_ants:
@@ -238,7 +236,11 @@ class AIPlayer(Player):
         return closest_dist
 
 
-    # helper function for evaluate state - self explanatory
+    ##
+    # get_closest_enemy_worker_dist - helper function
+    #
+    # returns distance to closest enemy worker ant
+    ##
     def get_closest_enemy_worker_dist(self, my_ant_coords, enemy_ants):
         closest_dist = 100
         for ant in enemy_ants:
@@ -249,7 +251,11 @@ class AIPlayer(Player):
         return closest_dist
 
 
-    # helper function for evaluate state - self explanatory
+    ##
+    # get_closest_enemy_food_dist - helper function
+    #
+    # returns distance to closest enemy food
+    ##
     def get_closest_enemy_food_dist(self, my_ant_coords, enemy_food_coords):
 
         enemy_food1_dist = approxDist(my_ant_coords, enemy_food_coords[0])
@@ -261,14 +267,17 @@ class AIPlayer(Player):
             return enemy_food2_dist
 
 
-    #Evaluates and scores a GameState Object
+    ##
+    # evaluate_state
+    #
+    # Evaluates and scores a GameState Object
     #
     # Parameters
     #   state - the GameState object to evaluate
     #
     # Return
     #   a number between 0 and 1 inclusive
-    #
+    ##
     def evaluate_state(self, state):
         #return 0.5
 
@@ -408,34 +417,41 @@ class AIPlayer(Player):
 
         #scores other important things
 
+        #state eval
         sEval = 0
 
+        #assesses worker inventory
         if worker_count == 2:
             sEval += 50
         elif worker_count < 2:
             sEval -= 10
         elif worker_count > 2:
             eval_num = 0.00001
-            #print("Built a 3rd worker, returned 0.00001")
             return eval_num
 
+        #assesses drone inventory
         if drone_count == 2:
             sEval += 50
         elif drone_count < 2:
             sEval -= 10
         elif drone_count > 2:
-            sEval = 0
+            eval_num = 0.00001
+            return eval_num
 
+        #assesses food
         if not sEval == 0:
             sEval += 20 * my_inv.foodCount
 
+        #assesses losing conditions relevant to this AI
         if my_inv.foodCount == 11:
             return 1
         if enemy_inv.foodCount == 11:
             return 0
 
+        #a temporary variable
         temp = 0
 
+        #scores workers
         for val in wEval:
             temp += val
         if worker_count == 0:
@@ -445,6 +461,7 @@ class AIPlayer(Player):
 
         temp = 0
 
+        #scores drones
         for val in dEval:
             temp += val
 
@@ -453,16 +470,21 @@ class AIPlayer(Player):
         else:
             dEvalAv = 0
 
+        #total possible score
         total_possible = 100.0 + 50.0 + 50.0 + 300.0
 
+        #scores total evaluation and returns
         eval = (qEval + wEvalAv + dEvalAv + sEval)/ total_possible
         if eval <= 0:
             eval = 0.00002
 
-        #print(eval)
         return eval
 
-
+    ##
+    # merge_sort
+    #
+    # useful for sorting the move list from least to greatest in nlog(n) time
+    ##
     def mergeSort(self, alist):
         if len(alist) > 1:
             mid = len(alist) // 2
@@ -493,5 +515,39 @@ class AIPlayer(Player):
                 alist[k] = righthalf[j]
                 j = j + 1
                 k = k + 1
+
+
+#unit tests
+testPlayer = AIPlayer(PLAYER_ONE)
+#test get_closest_enemy_dist
+testAntList = [Ant((2,4), 4, None), Ant((3,5), 2, None), Ant((2,5), 3, None), Ant((2,2), 1, None)]
+val = AIPlayer.get_closest_enemy_dist(testPlayer, (2,1), testAntList)
+assert (AIPlayer.get_closest_enemy_dist(testPlayer, (2,1), testAntList)==3), "get_closest_enemy_dist isn't working right(returned %d)" % val
+
+#test get_closest_enemy_worker_dist
+testAntList = [Ant((2,4), 1, None), Ant((3,5), 1, None), Ant((2,5), 1, None), Ant((2,2), 2, None)]
+val = AIPlayer.get_closest_enemy_worker_dist(testPlayer, (2,1), testAntList)
+assert (AIPlayer.get_closest_enemy_worker_dist(testPlayer, (2,1), testAntList)==3), "get_closest_enemy_worker_dist isn't working right(returned %d)" % val
+
+#test get_closest_enemy_food_dist
+val = AIPlayer.get_closest_enemy_food_dist(testPlayer, (2,3), [(2,4), (2,5)])
+assert (AIPlayer.get_closest_enemy_food_dist(testPlayer, (2,3), [(2,4), (2,5)])==1), "get_closest_enemy_food_dist isn't working right(returned %d)" % val
+
+#test evaluate_state
+board = [[Location((col, row)) for row in xrange(0,BOARD_LENGTH)] for col in xrange(0,BOARD_LENGTH)]
+testConstrList1=[Construction((1,1), ANTHILL), Construction((1,2), TUNNEL), Construction((9,1), FOOD), Construction((9,2), FOOD)]
+testConstrList2=[Construction((9,9), ANTHILL), Construction((9,8), TUNNEL), Construction((1,8), FOOD), Construction((1,9), FOOD)]
+p1Inventory = Inventory(PLAYER_ONE, [Ant((1,1), 0, PLAYER_ONE), Ant((1,5), 1, PLAYER_ONE)], testConstrList1, 0)
+p2Inventory = Inventory(PLAYER_TWO, [Ant((1,2), 2, PLAYER_ONE), Ant((1,6), 2, PLAYER_ONE)], testConstrList2, 0)
+neutralInventory = Inventory(NEUTRAL, [], [], 0)
+testState1 = GameState(board, [p1Inventory, p2Inventory, neutralInventory], MENU_PHASE, PLAYER_ONE)
+eval1 = AIPlayer.evaluate_state(testPlayer, testState1)
+board = [[Location((col, row)) for row in xrange(0,BOARD_LENGTH)] for col in xrange(0,BOARD_LENGTH)]
+p1Inventory = Inventory(PLAYER_ONE, [Ant((1,1), 2, PLAYER_ONE), Ant((1,5), 2, PLAYER_ONE)], [Construction((1,1), ANTHILL), Construction((1,2), TUNNEL)], 0)
+p2Inventory = Inventory(PLAYER_TWO, [Ant((1,2), 0, PLAYER_ONE), Ant((1,6), 1, PLAYER_ONE)], [Construction((9,9), ANTHILL), Construction((9,8), TUNNEL)], 0)
+neutralInventory = Inventory(NEUTRAL, [], [], 0)
+testState2 = GameState(board, [p1Inventory, p2Inventory, neutralInventory], MENU_PHASE, PLAYER_ONE)
+eval2 = AIPlayer.evaluate_state(testPlayer, testState2)
+assert(eval1<eval2), "evaluate_state is broken (returned %d and %d)" % (eval1, eval2)
 
 

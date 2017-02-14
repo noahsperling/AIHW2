@@ -247,7 +247,10 @@ class AIPlayer(Player):
         return closest_dist
 
 
-    # helper function for evaluate state - self explanatory
+    # helper function for evaluate state
+    #
+    #finds the closest
+    #
     def get_closest_enemy_food_dist(self, my_ant_coords, enemy_food_coords):
 
         enemy_food1_dist = approxDist(my_ant_coords, enemy_food_coords[0])
@@ -259,7 +262,7 @@ class AIPlayer(Player):
             return enemy_food2_dist
 
 
-    #Evaluates and scores a GameState Object
+    # Evaluates and scores a GameState Object
     #
     # Parameters
     #   state - the GameState object to evaluate
@@ -268,23 +271,23 @@ class AIPlayer(Player):
     #   a number between 0 and 1 inclusive
     #
     def evaluate_state(self, state):
-        #return 0.5
+        # return 0.5
 
-        #the starting value, not winning or losing
+        # the starting value, not winning or losing
         eval = 0.0
 
-        #the AIs player ID
+        # the AIs player ID
         me = state.whoseTurn
 
-        #the inventories of this AI and the enemy
+        # the inventories of this AI and the enemy
         my_inv = None
         enemy_inv = None
 
-        #important number
+        # important number
         worker_count = 0
         drone_count = 0
 
-        #sets up the inventories
+        # sets up the inventories
         if state.inventories[0].player == me:
             my_inv = state.inventories[0]
             enemy_inv = state.inventories[1]
@@ -303,114 +306,163 @@ class AIPlayer(Player):
             else:
                 enemy_food_coords.append(food.coords)
 
-        #coordinates of this AI's tunnel
+        # coordinates of this AI's tunnel
         tunnel = my_inv.getTunnels()
         t_coords = tunnel[0].coords
 
-        #coordinates of this AI's anthill
+        # coordinates of this AI's anthill
         ah_coords = my_inv.getAnthill().coords
 
-        #iterates through ants and scores positioning
+        # A list that stores the evaluations of each worker
+        wEval = []
+
+        # A list that stores the evaluations of each drone, if they exist
+        dEval = []
+
+        # queen evaluation
+        qEval = 0
+
+        # iterates through ants and scores positioning
         for ant in my_inv.ants:
 
-            #scores queen
+            # scores queen
             if ant.type == QUEEN:
 
-                #if queen is on anthill, tunnel, or food it's bad
-                if ant.coords == ah_coords or ant.coords == t_coords or ant.coords == food_coords[0] or ant.coords == food_coords[1]:
-                    eval -= 200
+                qEval = 50.0
 
-                #if queen is out of rows 0 or 1 it's bad
+                # if queen is on anthill, tunnel, or food it's bad
+                if ant.coords == ah_coords or ant.coords == t_coords or ant.coords == food_coords[
+                    0] or ant.coords == food_coords[1]:
+                    qEval -= 10
+
+                # if queen is out of rows 0 or 1 it's bad
                 if ant.coords[0] > 1:
-                    eval -= 100
+                    qEval -= 10
 
                 # the father from enemy ants, the better
-                eval += -100 + (15 * self.get_closest_enemy_dist(ant.coords, enemy_inv.ants))
+                qEval -= 2 * self.get_closest_enemy_dist(ant.coords, enemy_inv.ants)
 
-            #scores worker to incentivize food gathering
+            # scores worker to incentivize food gathering
             elif ant.type == WORKER:
 
-                #tallies up workers
+                # tallies up workers
                 worker_count += 1
 
-                #if carrying, the closer to the anthill or tunnel, the better
+                # if carrying, the closer to the anthill or tunnel, the better
                 if ant.carrying:
 
-                    eval += 500
+                    wEval.append(100.0)
 
-                    #distance to anthill
+                    # distance to anthill
                     ah_dist = approxDist(ant.coords, ah_coords)
 
-                    #distance to tunnel
+                    # distance to tunnel
                     t_dist = approxDist(ant.coords, t_coords)
 
-                    #finds closest and scores
-                    #if ant.coords == ah_coords or ant.coords == t_coords:
-                        #print("PHill")
-                        #eval += 100000000
+                    # finds closest and scores
+                    # if ant.coords == ah_coords or ant.coords == t_coords:
+                    # print("PHill")
+                    # eval += 100000000
                     if t_dist < ah_dist:
-                        eval += 500 - (100 * t_dist)
+                        wEval[worker_count - 1] -= 5 * t_dist
                     else:
-                        eval += 500 - (100 * ah_dist)
+                        wEval[worker_count - 1] -= 5 * ah_dist
 
-                #if not carrying, the closer to food, the better
+                # if not carrying, the closer to food, the better
                 else:
 
-                    #distance to foods
+                    wEval.append(80.0)
+
+                    # distance to foods
                     f1_dist = approxDist(ant.coords, food_coords[0])
                     f2_dist = approxDist(ant.coords, food_coords[1])
 
-                    #finds closest and scores
-                    #if ant.coords == food_coords[0] or ant.coords == food_coords[1]:
-                        #print("PFood")
-                        #eval += 500
+                    # finds closest and scores
+                    # if ant.coords == food_coords[0] or ant.coords == food_coords[1]:
+                    # print("PFood")
+                    # eval += 500
+
                     if f1_dist < f2_dist:
-                        eval += 500 - (100 * f1_dist)
+                        wEval[worker_count - 1] -= 5 * f1_dist
                     else:
-                        eval += 500 - (100 * f2_dist)
+                        wEval[worker_count - 1] -= 5 * f2_dist
 
-                #the father from enemy ants, the better
-                eval += -5 + self.get_closest_enemy_dist(ant.coords, enemy_inv.ants)
+                        # the father from enemy ants, the better
+                        # eval += -5 + self.get_closest_enemy_dist(ant.coords, enemy_inv.ants)
 
-            #scores soldiers to incentivize the disruption of the enemy economy
+            # scores soldiers to incentivize the disruption of the enemy economy
             else:
 
-                #tallies up soldiers
+                # tallies up soldiers
                 drone_count += 1
+
+                dEval.append(50.0)
 
                 nearest_enemy_worker_dist = self.get_closest_enemy_worker_dist(ant.coords, enemy_inv.ants)
 
-                #if there is an enemy worker
+                # if there is an enemy worker
                 if not nearest_enemy_worker_dist == 100:
-                    eval += 50 - (5 * nearest_enemy_worker_dist)
+                    dEval[drone_count - 1] -= 5 * nearest_enemy_worker_dist
 
-                #if there isn't an enemy worker, go to the food
+                # if there isn't an enemy worker, go to the food
                 else:
-                    eval += 50 - self.get_closest_enemy_food_dist(ant.coords, enemy_food_coords)
+                    dEval[drone_count - 1] -= 5 * self.get_closest_enemy_food_dist(ant.coords, enemy_food_coords)
 
-        #scores other important things
+        # scores other important things
 
-        if worker_count < 2:
-            eval -= 50
+        sEval = 0
 
-        if drone_count < 2:
-            eval -= 50
+        if worker_count == 2:
+            sEval += 50
+        elif worker_count < 2:
+            sEval -= 10
+        elif worker_count > 2:
+            eval_num = 0.00001
+            # print("Built a 3rd worker, returned 0.00001")
+            return eval_num
 
-        if worker_count > 2:
-            eval -= 100000
+        if drone_count == 2:
+            sEval += 50
+        elif drone_count < 2:
+            sEval -= 10
+        elif drone_count > 2:
+            sEval = 0
 
-        if drone_count > 2:
-            eval -= 100000
+        if not sEval == 0:
+            sEval += 20 * my_inv.foodCount
 
+        if my_inv.foodCount == 11:
+            return 1
+        if enemy_inv.foodCount == 11:
+            return 0
 
-        eval += 1500 * my_inv.foodCount
+        temp = 0
 
-        #if my_inv.foodCount == 11 or enemy_inv.foodCount == 0:
-            #return 1
-        #else:
-        return_eval = eval/5000
-        print(return_eval)
-        return return_eval
+        for val in wEval:
+            temp += val
+        if worker_count == 0:
+            wEvalAv = 0
+        else:
+            wEvalAv = temp / worker_count
+
+        temp = 0
+
+        for val in dEval:
+            temp += val
+
+        if not drone_count == 0:
+            dEvalAv = temp / drone_count
+        else:
+            dEvalAv = 0
+
+        total_possible = 100.0 + 50.0 + 50.0 + 300.0
+
+        eval = (qEval + wEvalAv + dEvalAv + sEval) / total_possible
+        if eval <= 0:
+            eval = 0.00002
+
+        # print(eval)
+        return eval
 
     def mergeSort(self, alist):
         if len(alist) > 1:
@@ -442,6 +494,7 @@ class AIPlayer(Player):
                 alist[k] = righthalf[j]
                 j = j + 1
                 k = k + 1
+
 
 
 testPlayer = AIPlayer(PLAYER_ONE)
